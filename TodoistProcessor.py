@@ -11,6 +11,7 @@ class TodoistProcessor(TodoistConnector):
     def __init__(self, path_to_config: str):
         super().__init__(path_to_config)
         self.cacheManager = TodoistCacheManager('cache.csv')
+        self.time_pattern = '%Y-%m-%dT%H:%M:%SZ'
 
     def get_project_info(self, project_name: str):
         try:
@@ -24,8 +25,9 @@ class TodoistProcessor(TodoistConnector):
         This code retrieves and count all tasks with event_type per each week.
         Note that the maximum tasks per week should be no more than 100.
         If you need receive more tasks use offset option in self.api.activity.get().
-        :param time_range: tuple of strings (%Y-%m-%d) denoting the beginning and end of time interval.
-        If you want to omit beginning or end, just pass "-" string. Range is inclusive.
+        :param time_range: tuple of strings (%Y-%m-%dT%H:%M:%SZ) denoting the beginning
+         and end of time interval. If you want to omit beginning or end, just pass "-" string.
+        Range is inclusive.
         :param event_type: type of event (see all available options on official site).
         :return: list of tuples where first element is date, second is number of tasks
          of event_type corresponding by that date.
@@ -39,10 +41,10 @@ class TodoistProcessor(TodoistConnector):
 
         if len(time_range) == 2:
             beginning, end = time_range
-            fmt_beginning = dt.strptime(beginning, '%Y-%m-%d') if beginning != '-' else dt.min
-            fmt_end = dt.strptime(end, '%Y-%m-%d') if end != '-' else dt.max
+            fmt_beginning = dt.strptime(beginning, self.time_pattern) if beginning != '-' else dt.min
+            fmt_end = dt.strptime(end, self.time_pattern) if end != '-' else dt.max
             events_list = list(
-                filter(lambda t: fmt_beginning <= dt.strptime(t[0], '%Y-%m-%d') <= fmt_end,
+                filter(lambda t: fmt_beginning <= dt.strptime(t[0], self.time_pattern) <= fmt_end,
                        events_list)
             )
         else:
@@ -65,11 +67,11 @@ class TodoistProcessor(TodoistConnector):
             part_of_events = self.api.activity.get(page=page, limit=limit, event_type=event_type)['events']
             if len(part_of_events) == 0:
                 break
-            events_dict = Counter(map(lambda e: e['event_date'].split('T')[0], part_of_events))
+            events_dict = Counter(map(lambda e: e['event_date'], part_of_events))
             events_list = sorted(events_dict.items(), key=lambda e: e[0])
             if update:
                 events_list = list(
-                    filter(lambda t: dt.strptime(last_date, '%Y-%m-%d') < dt.strptime(t[0], '%Y-%m-%d'),
+                    filter(lambda t: dt.strptime(last_date, self.time_pattern) < dt.strptime(t[0], self.time_pattern),
                            events_list)
                 )
                 if len(events_list) == 0:
@@ -98,11 +100,11 @@ class TodoistProcessor(TodoistConnector):
 
 if __name__ == '__main__':
     connector = TodoistProcessor('context.json')
-    lst = connector.get_events(time_range=("2021-07-01", "2021-08-01"))
+    lst = connector.get_events(time_range=("-", "2021-08-01T00:00:00Z"))
     x, y = tuple(zip(*lst))
     print(len(x))
     print(sum(y) / len(y))
-    plt.plot(x, y)
-    plt.show()
-    # vis = Visualizer(list(lst))
-    # vis.plot()
+    # plt.plot(x, y)
+    # plt.show()
+    vis = Visualizer(list(lst))
+    vis.plot()
