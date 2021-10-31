@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from TodoistCacheManager import TodoistCacheManager
 from TodoistConnector import TodoistConnector
 from Visualizer import Visualizer
+from enums import ModeType
 
 
 class TodoistProcessor(TodoistConnector):
@@ -97,14 +98,29 @@ class TodoistProcessor(TodoistConnector):
         )
         return self.cacheManager.read(func_to_read)
 
+    @staticmethod
+    def aggregate(data, mode=ModeType.DATE):
+        aggr = []
+        if mode == ModeType.DATE:
+            aggr = list(map(lambda d: d[0].split('T')[0], data))
+
+        if mode == ModeType.TIME:
+            aggr = list(map(lambda d: d[0].split('T')[1], data))
+
+        events_dict = Counter(aggr)
+        events_list = sorted(events_dict.items(), key=lambda e: e[0])
+
+        return events_list
+
 
 if __name__ == '__main__':
     connector = TodoistProcessor('context.json')
     lst = connector.get_events(time_range=("-", "2021-08-01T00:00:00Z"))
+    lst = TodoistProcessor.aggregate(lst)
     x, y = tuple(zip(*lst))
     print(len(x))
     print(sum(y) / len(y))
-    # plt.plot(x, y)
-    # plt.show()
-    vis = Visualizer(list(lst))
-    vis.plot()
+    plt.plot(x, y)
+    plt.show()
+    # vis = Visualizer(list(lst))
+    # vis.plot()
