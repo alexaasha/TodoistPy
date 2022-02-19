@@ -49,7 +49,7 @@ class TodoistProcessor(TodoistConnector):
                        events_list)
             )
         else:
-            raise ValueError('Invalid time_range.')
+            raise ValueError('Invalid time_range')
 
         return events_list
 
