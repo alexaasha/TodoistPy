@@ -68,10 +68,9 @@ class TodoistProcessor(TodoistConnector):
             part_of_events = self.api.activity.get(page=page, limit=limit, event_type=event_type)['events']
             if len(part_of_events) == 0:
                 break
-            # events_dict = Counter(map(lambda e: e['event_date'], part_of_events))
-            # events_list = sorted(events_dict.items(), key=lambda e: dt.strptime(e[0], self.time_pattern))
-            event_fabric = Aggregator(part_of_events)
-            events_list = event_fabric.perform_aggregation()
+
+            aggregator = Aggregator(part_of_events)
+            events_list = aggregator.perform_aggregation()
             if update:
                 events_list = list(
                     filter(lambda t: dt.strptime(last_date, self.time_pattern) < dt.strptime(t[0], self.time_pattern),
