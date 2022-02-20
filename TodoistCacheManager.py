@@ -1,4 +1,5 @@
 import os
+import json
 
 
 class TodoistCacheManager:
@@ -18,32 +19,16 @@ class TodoistCacheManager:
         else:
             return ''
 
-    def write(self, data_generator):
-        mode = 'a' if self.__cache_existence_flag else 'w'
-        with open(self.path_to_cache, mode) as cache:
-            cache.writelines(data_generator)
+    def write(self, data_dict: dict):
+        with open(self.path_to_cache, 'w') as f:
+            json.dump(data_dict, f, indent='  ')
 
     def remove_cache(self):
         if self.__cache_existence_flag:
             os.remove(self.path_to_cache)
 
-    def read(self, function_to_process):
-        try:
-            with open(self.path_to_cache) as cache:
-                data_generator = function_to_process(list(cache))
+    def read(self) -> dict:
+        with open(self.path_to_cache, 'r') as f:
+            data_dict = json.load(f)
 
-            return data_generator
-        except FileNotFoundError:
-            return iter([])
-
-
-if __name__ == '__main__':
-    cache_manager = TodoistCacheManager('cache.csv')
-    data = [("a", 1), ("b", 2)]
-    data_gen = map(lambda t: f'{t[0]},{str(t[1])}\n', data)
-    cache_manager.write(data_gen)
-    func = lambda d: (
-        map(lambda t: tuple(t.split(',')),
-            map(lambda s: s.strip('\n'), d))
-    )
-    print(list(cache_manager.read(func)))
+        return data_dict

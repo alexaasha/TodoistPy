@@ -11,8 +11,8 @@ from enums import ModeType
 class TodoistProcessor(TodoistConnector):
     def __init__(self, path_to_config: str):
         super().__init__(path_to_config)
-        self.cacheManager = TodoistCacheManager('cache.csv')
-        self.time_pattern = '%Y-%m-%dT%H:%M:%SZ'
+        self.cacheManager = TodoistCacheManager('cache.json')
+        self.time_pattern = '%Y-%m-%d'
 
     def get_project_info(self, project_name: str):
         try:
@@ -35,23 +35,23 @@ class TodoistProcessor(TodoistConnector):
         """
 
         if not self.cacheManager.is_cache_exists():
-            events_list = self.__pull_events_from_api(event_type)
+            events_dict = self.__pull_events_from_api(event_type)
         else:
             self.__pull_events_from_api(event_type, update=True)
-            events_list = self.__pull_events_from_cache()
+            events_dict = self.cacheManager.read()
 
         if len(time_range) == 2:
             beginning, end = time_range
             fmt_beginning = dt.strptime(beginning, self.time_pattern) if beginning != '-' else dt.min
             fmt_end = dt.strptime(end, self.time_pattern) if end != '-' else dt.max
-            events_list = list(
+            events_dict = dict(
                 filter(lambda t: fmt_beginning <= dt.strptime(t[0], self.time_pattern) <= fmt_end,
-                       events_list)
+                       events_dict.items())
             )
         else:
             raise ValueError('Invalid time_range')
 
-        return events_list
+        return events_dict
 
     def __pull_events_from_api(self, event_type='completed', update=False):
         """
@@ -91,15 +91,9 @@ class TodoistProcessor(TodoistConnector):
                 pulled_data = events_list[:-1] + pulled_data
             page += 1
 
-        self.cacheManager.write(map(lambda t: f'{t[0]},{str(t[1])}\n', pulled_data))
-        return pulled_data
-
-    def __pull_events_from_cache(self):
-        func_to_read = lambda d: (
-            map(lambda t: (t[0], int(t[1])),
-                map(lambda t: tuple(t.strip('\n').split(',')), d))
-        )
-        return self.cacheManager.read(func_to_read)
+        pulled_data_dict = dict(pulled_data)
+        self.cacheManager.write(pulled_data_dict)
+        return pulled_data_dict
 
     @staticmethod
     def aggregate(data, mode=ModeType.DATE):

@@ -139,4 +139,4 @@ dmypy.json
 # Cython debug symbols
 cython_debug/
 /context.json
-/cache.csv
+/cache.json
