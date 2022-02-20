@@ -1,10 +1,9 @@
 from collections import Counter
 from datetime import datetime as dt
-import matplotlib.pyplot as plt
 
+from Aggregator import Aggregator
 from TodoistCacheManager import TodoistCacheManager
 from TodoistConnector import TodoistConnector
-from Aggregator import Aggregator
 from enums import ModeType
 
 
@@ -112,12 +111,5 @@ class TodoistProcessor(TodoistConnector):
 
 if __name__ == '__main__':
     connector = TodoistProcessor('context.json')
-    lst = connector.get_events(time_range=("-", "-"))
-    # lst = TodoistProcessor.aggregate(lst)
-    # x, y = tuple(zip(*lst))
-    # print(len(x))
-    # print(sum(y) / len(y))
-    # plt.plot(x, y)
-    # plt.show()
-    # vis = Visualizer(list(lst))
-    # vis.plot()
+    received_data = connector.get_events(time_range=("-", "-"))
+    print(received_data)
