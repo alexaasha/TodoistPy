@@ -60,6 +60,7 @@ class TodoistProcessor(TodoistConnector):
         :param update:
         :return:
         """
+        # todo rewrite cache logic
         last_date = self.cacheManager.get_last_line().split(',')[0] if update else ''
 
         count, limit, page = -1, 100, 0
@@ -70,24 +71,24 @@ class TodoistProcessor(TodoistConnector):
                 break
 
             aggregator = Aggregator(part_of_events)
-            events_dict = aggregator.perform_aggregation()
+            events_list = aggregator.perform_aggregation()
             if update:
-                events_dict = dict(
+                events_list = list(
                     filter(lambda t: dt.strptime(last_date, self.time_pattern) < dt.strptime(t[0], self.time_pattern),
-                           events_dict.items())
+                           events_list)
                 )
 
-                if len(events_dict) == 0:
+                if len(events_list) == 0:
                     break
 
             if len(pulled_data) > 0:
-                if pulled_data[0][0] == events_dict[-1][0]:
-                    pulled_data[0] = (pulled_data[0][0], pulled_data[0][1] + events_dict[-1][1])
-                    pulled_data = events_dict[:-1] + pulled_data
+                if pulled_data[0][0] == events_list[-1][0]:
+                    pulled_data[0] = (pulled_data[0][0], pulled_data[0][1] + events_list[-1][1])
+                    pulled_data = events_list[:-1] + pulled_data
                 else:
-                    pulled_data = events_dict + pulled_data
+                    pulled_data = events_list + pulled_data
             else:
-                pulled_data = events_dict[:-1] + pulled_data
+                pulled_data = events_list[:-1] + pulled_data
             page += 1
 
         self.cacheManager.write(map(lambda t: f'{t[0]},{str(t[1])}\n', pulled_data))
@@ -118,11 +119,11 @@ class TodoistProcessor(TodoistConnector):
 if __name__ == '__main__':
     connector = TodoistProcessor('context.json')
     lst = connector.get_events(time_range=("-", "-"))
-    lst = TodoistProcessor.aggregate(lst)
-    x, y = tuple(zip(*lst))
-    print(len(x))
-    print(sum(y) / len(y))
-    plt.plot(x, y)
-    plt.show()
+    # lst = TodoistProcessor.aggregate(lst)
+    # x, y = tuple(zip(*lst))
+    # print(len(x))
+    # print(sum(y) / len(y))
+    # plt.plot(x, y)
+    # plt.show()
     # vis = Visualizer(list(lst))
     # vis.plot()

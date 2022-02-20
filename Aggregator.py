@@ -5,7 +5,7 @@ class Aggregator:
     def __init__(self, events: list):
         self.events = events
 
-    def perform_aggregation(self) -> dict:
+    def perform_aggregation(self) -> list:
         """
         Performs an aggregation according to the rule
         """
@@ -17,7 +17,7 @@ class Aggregator:
             date, time = event_date.rstrip('Z').split('T')
             dates_dict[date].append(time)
 
-        return dates_dict
+        return list(dates_dict.items())
 
 
 if __name__ == '__main__':
