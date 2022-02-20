@@ -4,6 +4,7 @@ from datetime import datetime as dt
 from Aggregator import Aggregator
 from TodoistCacheManager import TodoistCacheManager
 from TodoistConnector import TodoistConnector
+from Visualizer import Visualizer
 from enums import ModeType
 
 
@@ -111,5 +112,7 @@ class TodoistProcessor(TodoistConnector):
 
 if __name__ == '__main__':
     connector = TodoistProcessor('context.json')
-    received_data = connector.get_events(time_range=("-", "-"))
-    print(received_data)
+    received_data = connector.get_events(time_range=("2022-01-12", "-"))
+
+    vis = Visualizer(received_data)
+    vis.tasks_plot()

@@ -1,9 +1,17 @@
-class Visualizer:
-    def __init__(self, data):
-        self.x, self.y = data
+import re
+from matplotlib import pyplot as plt
 
-    def plot(self, mode='date', trend_line=''):
-        ...
+
+class Visualizer:
+    def __init__(self, data: dict):
+        self.data = data
+
+    def tasks_plot(self, mode='date', trend_line=''):
+        if mode == 'date':
+            num_of_tasks = list(map(lambda v: len(v), self.data.values()))
+            dates = list(map(lambda d: re.split(r'\d{4}-', d)[-1], self.data.keys()))
+            plt.plot(dates, num_of_tasks)
+            plt.show()
 
     def hist(self):
         ...
