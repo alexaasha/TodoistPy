@@ -3,6 +3,8 @@ import json
 
 
 class TodoistCacheManager:
+    events_dict = None
+
     def __init__(self, path_to_cache: str):
         self.path_to_cache = path_to_cache
         self.__cache_existence_flag = True if os.path.exists(path_to_cache) else False
@@ -10,14 +12,9 @@ class TodoistCacheManager:
     def is_cache_exists(self):
         return self.__cache_existence_flag
 
-    def get_last_line(self):
-        if self.__cache_existence_flag:
-            with open(self.path_to_cache) as f:
-                last_line = f.readlines()[-1]
-
-            return last_line
-        else:
-            return ''
+    def get_last_date(self) -> str:
+        events_dict = self.read() if self.events_dict is None else self.events_dict
+        return list(events_dict.keys())[-1]
 
     def write(self, data_dict: dict):
         with open(self.path_to_cache, 'w') as f:
@@ -29,6 +26,6 @@ class TodoistCacheManager:
 
     def read(self) -> dict:
         with open(self.path_to_cache, 'r') as f:
-            data_dict = json.load(f)
+            self.events_dict = json.load(f)
 
-        return data_dict
+        return self.events_dict

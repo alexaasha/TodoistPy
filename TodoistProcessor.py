@@ -37,8 +37,11 @@ class TodoistProcessor(TodoistConnector):
         if not self.cacheManager.is_cache_exists():
             events_dict = self.__pull_events_from_api(event_type)
         else:
-            self.__pull_events_from_api(event_type, update=True)
             events_dict = self.cacheManager.read()
+            upd_dict = self.__pull_events_from_api(event_type, update=True)
+            events_dict = {**events_dict, **upd_dict}
+
+        self.cacheManager.write(events_dict)
 
         if len(time_range) == 2:
             beginning, end = time_range
@@ -60,8 +63,7 @@ class TodoistProcessor(TodoistConnector):
         :param update:
         :return:
         """
-        # todo rewrite cache logic
-        last_date = self.cacheManager.get_last_line().split(',')[0] if update else ''
+        last_date = self.cacheManager.get_last_date() if update else ''
 
         count, limit, page = -1, 100, 0
         pulled_data = []
@@ -91,9 +93,7 @@ class TodoistProcessor(TodoistConnector):
                 pulled_data = events_list[:-1] + pulled_data
             page += 1
 
-        pulled_data_dict = dict(pulled_data)
-        self.cacheManager.write(pulled_data_dict)
-        return pulled_data_dict
+        return dict(pulled_data)
 
     @staticmethod
     def aggregate(data, mode=ModeType.DATE):
