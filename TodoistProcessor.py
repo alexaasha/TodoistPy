@@ -70,24 +70,24 @@ class TodoistProcessor(TodoistConnector):
                 break
 
             aggregator = Aggregator(part_of_events)
-            events_list = aggregator.perform_aggregation()
+            events_dict = aggregator.perform_aggregation()
             if update:
-                events_list = list(
+                events_dict = dict(
                     filter(lambda t: dt.strptime(last_date, self.time_pattern) < dt.strptime(t[0], self.time_pattern),
-                           events_list)
+                           events_dict.items())
                 )
 
-                # if len(events_list) == 0:
-                #     break
+                if len(events_dict) == 0:
+                    break
 
             if len(pulled_data) > 0:
-                if pulled_data[0][0] == events_list[-1][0]:
-                    pulled_data[0] = (pulled_data[0][0], pulled_data[0][1] + events_list[-1][1])
-                    pulled_data = events_list[:-1] + pulled_data
+                if pulled_data[0][0] == events_dict[-1][0]:
+                    pulled_data[0] = (pulled_data[0][0], pulled_data[0][1] + events_dict[-1][1])
+                    pulled_data = events_dict[:-1] + pulled_data
                 else:
-                    pulled_data = events_list + pulled_data
+                    pulled_data = events_dict + pulled_data
             else:
-                pulled_data = events_list[:-1] + pulled_data
+                pulled_data = events_dict[:-1] + pulled_data
             page += 1
 
         self.cacheManager.write(map(lambda t: f'{t[0]},{str(t[1])}\n', pulled_data))
