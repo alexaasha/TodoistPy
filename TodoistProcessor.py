@@ -112,7 +112,7 @@ class TodoistProcessor(TodoistConnector):
 
 if __name__ == '__main__':
     connector = TodoistProcessor('context.json')
-    received_data = connector.get_events(time_range=("2022-01-12", "-"))
+    received_data = connector.get_events(time_range=("2021-02-10", "-"))  # ("2022-02-10", "2022-03-10")
 
     vis = Visualizer(received_data)
     vis.tasks_plot()
