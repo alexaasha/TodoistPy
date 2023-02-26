@@ -12,6 +12,7 @@ class TodoistCacheManager:
     def is_cache_exists(self):
         return self.__cache_existence_flag
 
+    # todo consider making this deprecated
     def get_last_date(self) -> str:
         events_dict = self.read() if self.events_dict is None else self.events_dict
         return list(events_dict.keys())[-1]
