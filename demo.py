@@ -11,7 +11,7 @@ api.sync()
 for project in api.state['projects']:
     print(project['name'])
 
-events = api.activity.get()["events"]
+events = api.activity.sync()["events"]
 
 event_dict = {}
 for e in events:
