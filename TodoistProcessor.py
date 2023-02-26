@@ -2,25 +2,26 @@ from collections import Counter
 from datetime import datetime as dt
 
 from Aggregator import Aggregator
-from TodoistCacheManager import TodoistCacheManager
-from TodoistConnector import TodoistConnector
-from enums import ModeType
+from cache.TodoistCacheManager import TodoistCacheManager
+from connection.TodoistConnector import TodoistConnector
+from enums.ModeType import ModeType
+from enums.ResourceType import ResourceType
 
 
-class TodoistProcessor(TodoistConnector):
+class TodoistProcessor:
     def __init__(self, path_to_config: str):
-        super().__init__(path_to_config)
+        self.connector = TodoistConnector(path_to_config)
         self.cacheManager = TodoistCacheManager('cache.json')
         self.time_pattern = '%Y-%m-%d'
 
     def get_project_info(self, project_name: str):
-        try:
-            filtered_list = filter(lambda p: p['name'] == project_name, self.api.state['projects'])
-            return self.api.projects.get(next(filtered_list)['id'])
-        except StopIteration:
-            return 'no such project'
+        project_info = dict(filter(lambda p: p['name'] == project_name,
+                                   self.connector.sync([ResourceType.PROJECTS])['projects']))
+        if len(project_info) == 0:
+            raise Exception('No such project')
+        return project_info
 
-    def get_events(self, event_type='completed', time_range=('-', '-')):
+    def get_items(self, time_range=('-', '-')):
         """
         This code retrieves and count all tasks with event_type per each week.
         Note that the maximum tasks per week should be no more than 100.
@@ -28,32 +29,24 @@ class TodoistProcessor(TodoistConnector):
         :param time_range: tuple of strings (%Y-%m-%dT%H:%M:%SZ) denoting the beginning
          and end of time interval. If you want to omit beginning or end, just pass "-" string.
         Range is inclusive.
-        :param event_type: type of event (see all available options on official site).
         :return: list of tuples where first element is date, second is number of tasks
          of event_type corresponding by that date.
         """
 
-        if not self.cacheManager.is_cache_exists():
-            events_dict = self.__pull_events_from_api(event_type)
-        else:
-            events_dict = self.cacheManager.read()
-            upd_dict = self.__pull_events_from_api(event_type, update=True)
-            events_dict = {**events_dict, **upd_dict}
-
-        self.cacheManager.write(events_dict)
+        items_dict = self.connector.get_completed_items()
 
         if len(time_range) == 2:
             beginning, end = time_range
             fmt_beginning = dt.strptime(beginning, self.time_pattern) if beginning != '-' else dt.min
             fmt_end = dt.strptime(end, self.time_pattern) if end != '-' else dt.max
-            events_dict = dict(
+            items_dict = dict(
                 filter(lambda t: fmt_beginning <= dt.strptime(t[0], self.time_pattern) <= fmt_end,
-                       events_dict.items())
+                       items_dict.items())
             )
         else:
             raise ValueError('Invalid time_range')
 
-        return events_dict
+        return items_dict
 
     def __pull_events_from_api(self, event_type='completed', update=False):
         """
@@ -67,7 +60,7 @@ class TodoistProcessor(TodoistConnector):
         count, limit, page = -1, 100, 0
         pulled_data = []
         while True:
-            part_of_events = self.api.activity.get(page=page, limit=limit, event_type=event_type)['events']
+            part_of_events = self.api.activity.sync(page=page, limit=limit, event_type=event_type)['events']
             if len(part_of_events) == 0:
                 break
 
@@ -110,6 +103,6 @@ class TodoistProcessor(TodoistConnector):
 
 
 if __name__ == '__main__':
-    connector = TodoistProcessor('context.json')
-    received_data = connector.get_events(time_range=("-", "-"))
+    processor = TodoistProcessor('context.json')
+    received_data = processor.get_items(time_range=("2023-02-26", "-"))
     print(received_data)
