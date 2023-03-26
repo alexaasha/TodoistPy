@@ -38,9 +38,9 @@ class TodoistConnector:
 
         return r
 
-    @cacheable(cache_manager=cache_manager)
-    def get_completed_items(self, project_id="", limit=30, until="2021-5-29T10:13:00",
-                            since="2021-4-29T10:15:00", annotate_notes=False) -> List[Dict]:
+    # @cacheable(cache_manager=cache_manager)
+    def get_completed_items(self, until="2021-5-29T10:13:00", since="2021-4-29T10:15:00", project_id="",
+                            limit=30, annotate_notes=False) -> List[Dict]:
         headers = {"Authorization": self.token}
         data = {'limit': limit,
                 'until': until,
