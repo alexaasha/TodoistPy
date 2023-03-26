@@ -21,6 +21,12 @@ class TodoistConnector:
             self.session = requests.Session()
 
     def sync(self, resource_types: List[ResourceType]):
+        """
+        This method is used for synchronization with todoist api. It yields data of corresponding
+        resourceType that wasn't competed.
+
+        :type resource_types: List of resource types to retrieve from API
+        """
         resource_string = json.dumps(list(map(lambda rt: rt.value, resource_types)))
         headers = {"Authorization": self.token}
         data = {'sync_token': self.sync_token,
@@ -33,9 +39,18 @@ class TodoistConnector:
         return r
 
     @cacheable(cache_manager=cache_manager)
-    def get_completed_items(self) -> List[Dict]:
+    def get_completed_items(self, project_id="", limit=30, until="2021-5-29T10:13:00",
+                            since="2021-4-29T10:15:00", annotate_notes=False) -> List[Dict]:
         headers = {"Authorization": self.token}
-        r = self.session.get(self.todoist_path + 'completed/get_all', headers=headers)
+        data = {'limit': limit,
+                'until': until,
+                'since': since,
+                'annotate_notes': annotate_notes
+                }
+        if project_id != "":
+            data.update({'project_id': project_id})
+
+        r = self.session.get(self.todoist_path + 'completed/get_all', params=data, headers=headers)
         return json.loads(r.text)["items"]
 
 
