@@ -140,3 +140,4 @@ dmypy.json
 cython_debug/
 /context.json
 /cache.json
+/todoist/
